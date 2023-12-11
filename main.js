@@ -74,6 +74,10 @@ Render.lookAt(render, {
 })
 
 // main
+var ground = Bodies.rectangle(ground_x, ground_y, ground_w, ground_h, {
+    isStatic: true,
+})
+
 var beam = Bodies.rectangle(beam_x, beam_y, beam_w, beam_h, {
     render: { fillStyle: 'white' },
 })
@@ -87,29 +91,44 @@ var constraint = Constraint.create({
     length: 0,
 })
 
-Composite.add(world, [beam, ball, constraint])
-
-Composite.add(world, [
-    // ground
-    Bodies.rectangle(ground_x, ground_y, ground_w, ground_h, {
-        isStatic: true,
-        // render: { fillStyle: 'black' },
-    }),
-])
+let composite = Composite.add(world, [ground, beam, ball, constraint])
 
 let err = 0
 let set_point = 0
 
+function reset(){
+    Composite.clear(composite, deep=true)
+
+    ground = Bodies.rectangle(ground_x, ground_y, ground_w, ground_h, {
+        isStatic: true,
+    })
+    
+    beam = Bodies.rectangle(beam_x, beam_y, beam_w, beam_h, {
+        render: { fillStyle: 'white' },
+    })
+    ball = Bodies.circle(ball_x, ball_y, ball_rad, {
+        render: { fillStyle: 'red' },
+    })
+    
+    constraint = Constraint.create({
+        pointA: { x: beam_x, y: beam_y },
+        bodyB: beam,
+        length: 0,
+    })
+    
+    composite = Composite.add(world, [ground, beam, ball, constraint])
+}
+
 let controller = new PIDController(0.01, 0, 0, 1 / FPS, -10, 10)
 
 const gui = new dat.GUI({ name: 'Ball Beam' })
-const pid_folder = gui.addFolder('Controller')
 
-pid_folder.add(controller, 'kp', 0, 0.1, 0.001)
-pid_folder.add(controller, 'ki', 0, 0.1, 0.001)
-pid_folder.add(controller, 'kd', 0, 0.1, 0.001)
+gui.add(controller, 'kp', 0, 0.1, 0.001)
+gui.add(controller, 'ki', 0, 0.1, 0.001)
+gui.add(controller, 'kd', 0, 0.1, 0.001)
+gui.add({reset}, 'reset')
 
-pid_folder.open()
+gui.open()
 
 // callback
 function tick(e) {
