@@ -117,16 +117,18 @@ function reset(){
     })
     
     composite = Composite.add(world, [ground, beam, ball, constraint])
+
 }
 
 let controller = new PIDController(0.01, 0, 0, 1 / FPS, -10, 10)
 
 const gui = new dat.GUI({ name: 'Ball Beam' })
 
-gui.add(controller, 'kp', 0, 0.1, 0.001)
-gui.add(controller, 'ki', 0, 0.1, 0.001)
-gui.add(controller, 'kd', 0, 0.1, 0.001)
-gui.add({reset}, 'reset')
+gui.add(controller, 'kp', 0, 0.1, 0.001).onFinishChange(reset)
+gui.add(controller, 'ki', 0, 0.1, 0.001).onFinishChange(reset)
+gui.add(controller, 'kd', 0, 0.1, 0.001).onFinishChange(reset)
+// gui.add({reset}, 'reset')
+
 
 gui.open()
 
@@ -138,6 +140,11 @@ function tick(e) {
         let output = controller.compute(err, set_point)
         Body.applyForce(beam, { x: beam_x + 2, y: beam_y }, { x: 0, y: output })
     }
+
+    // if (ball.position.y > 600) {
+    //     console.log(err)
+        
+    // }
 
     // apply output as torque to beam
 
