@@ -1,3 +1,8 @@
+/*  kp-ki-kd
+    0.014-0-0.015
+*/
+
+
 const w = 800,
     h = 800,
     ground_x = w / 2,
@@ -11,6 +16,7 @@ const w = 800,
     ball_x = 450,
     ball_y = 350,
     ball_rad = 20,
+    ball_density = 0.02,
     FPS = 60,
     dt = 1000 / FPS
 
@@ -83,6 +89,7 @@ var beam = Bodies.rectangle(beam_x, beam_y, beam_w, beam_h, {
 })
 var ball = Bodies.circle(ball_x, ball_y, ball_rad, {
     render: { fillStyle: 'red' },
+    density: ball_density
 })
 
 var constraint = Constraint.create({
@@ -108,6 +115,7 @@ function reset(){
     })
     ball = Bodies.circle(ball_x, ball_y, ball_rad, {
         render: { fillStyle: 'red' },
+        density: ball_density
     })
     
     constraint = Constraint.create({
@@ -124,7 +132,7 @@ let controller = new PIDController(0.01, 0, 0, 1 / FPS, -10, 10)
 
 const gui = new dat.GUI({ name: 'Ball Beam' })
 
-gui.add(controller, 'kp', 0, 0.1, 0.001).onFinishChange(reset)
+gui.add(controller, 'kp', 0, 0.02, 0.001).onFinishChange(reset)
 gui.add(controller, 'ki', 0, 0.1, 0.001).onFinishChange(reset)
 gui.add(controller, 'kd', 0, 0.1, 0.001).onFinishChange(reset)
 // gui.add({reset}, 'reset')
