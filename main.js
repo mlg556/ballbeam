@@ -1,7 +1,7 @@
 /*  kp-ki-kd
-    0.014-0-0.015
+    0.014-0-0.015: ball 0.01 dense
+    0.014-0-0.02: ball 0.02 dense
 */
-
 
 const w = 800,
     h = 800,
@@ -16,9 +16,12 @@ const w = 800,
     ball_x = 450,
     ball_y = 350,
     ball_rad = 20,
-    ball_density = 0.02,
+    ball_density = 0.01,
     FPS = 60,
-    dt = 1000 / FPS
+    dt = 1000 / FPS,
+    kp0 = 0.014,
+    ki0 = 0.0,
+    kd0 = 0.02
 
 var Engine = Matter.Engine,
     Render = Matter.Render,
@@ -41,7 +44,7 @@ var render = Render.create({
     options: {
         width: w,
         height: h,
-        wireframes: false,
+        wireframes: true,
         showAngleIndicator: true,
     },
 })
@@ -89,7 +92,7 @@ var beam = Bodies.rectangle(beam_x, beam_y, beam_w, beam_h, {
 })
 var ball = Bodies.circle(ball_x, ball_y, ball_rad, {
     render: { fillStyle: 'red' },
-    density: ball_density
+    density: ball_density,
 })
 
 var constraint = Constraint.create({
@@ -103,60 +106,49 @@ let composite = Composite.add(world, [ground, beam, ball, constraint])
 let err = 0
 let set_point = 0
 
-function reset(){
-    Composite.clear(composite, deep=true)
+function reset() {
+    Composite.clear(composite, (deep = true))
 
-    ground = Bodies.rectangle(ground_x, ground_y, ground_w, ground_h, {
-        isStatic: true,
-    })
-    
     beam = Bodies.rectangle(beam_x, beam_y, beam_w, beam_h, {
         render: { fillStyle: 'white' },
     })
     ball = Bodies.circle(ball_x, ball_y, ball_rad, {
         render: { fillStyle: 'red' },
-        density: ball_density
+        density: ball_density,
     })
-    
+
     constraint = Constraint.create({
         pointA: { x: beam_x, y: beam_y },
         bodyB: beam,
         length: 0,
     })
-    
-    composite = Composite.add(world, [ground, beam, ball, constraint])
 
+    composite = Composite.add(world, [beam, ball, constraint, mouseConstraint])
+
+    controller.reset()
 }
 
-let controller = new PIDController(0.01, 0, 0, 1 / FPS, -10, 10)
+let controller = new PIDController(kp0, ki0, kd0, 1.0 / FPS, -10, 10)
 
 const gui = new dat.GUI({ name: 'Ball Beam' })
 
-gui.add(controller, 'kp', 0, 0.02, 0.001).onFinishChange(reset)
-gui.add(controller, 'ki', 0, 0.1, 0.001).onFinishChange(reset)
-gui.add(controller, 'kd', 0, 0.1, 0.001).onFinishChange(reset)
+gui.add(controller, 'kp', 0, 0.05, 0.001).onFinishChange(reset)
+gui.add(controller, 'ki', 0, 0.05, 0.001).onFinishChange(reset)
+gui.add(controller, 'kd', 0, 0.05, 0.001).onFinishChange(reset)
 // gui.add({reset}, 'reset')
-
 
 gui.open()
 
 // callback
-function tick(e) {
+function tick(_) {
     err = ball.position.x - beam_x
 
     if (ball.position.y < 600) {
         let output = controller.compute(err, set_point)
-        Body.applyForce(beam, { x: beam_x + 2, y: beam_y }, { x: 0, y: output })
+        // apply controller output as torque
+        beam.torque = output
     }
-
-    // if (ball.position.y > 600) {
-    //     console.log(err)
-        
-    // }
-
-    // apply output as torque to beam
-
     // console.log(e.timestamp)
 }
 
-Matter.Events.on(runner, 'beforeTick', tick)
+Matter.Events.on(runner, 'beforeUpdate', tick)

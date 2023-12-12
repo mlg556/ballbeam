@@ -14,44 +14,37 @@ function clamp(x, a, b) {
 }
 
 class PIDController {
-    constructor(kp, ki, kd, dt, outMin, outMax) {
+    constructor(kp, ki, kd, dt) {
         this.kp = kp
         this.ki = ki
         this.kd = kd
         this.dt = dt
-        this.outMin = outMin
-        this.outMax = outMax
 
-        this.ITerm = 0
-        this.inPrev = 0
-
-        this.isRunning = true
+        this.last_err = 0 // last error, used to calculate dErr
+        this.i_err = 0 // integral of error
     }
 
     compute(input, setPt) {
-        if (this.isRunning) {
-            let err = setPt - input
-            this.ITerm += this.ki * err
-            this.ITerm = clamp(this.ITerm, this.outMin, this.outMax)
+        let err = setPt - input
 
-            let dInput = input - this.inPrev
-            this.inPrev = input
+        this.i_err += err * this.dt // integral of error sum
 
-            let output = this.kp * err + this.ITerm * dt - this.kd * dInput * dt
-            output = clamp(output, this.outMin, this.outMax)
+        let dErr = (err - this.last_err) * this.dt
 
-            return output
-        }
-        return this.inPrev
+        let output = this.kp * err + this.ki * this.i_err + this.kd * dErr
+
+        console.log(
+            `out = ${output}, (${this.kp * err} + ${this.ki * this.i_err} + ${
+                this.kd * dErr
+            })`
+            // this.ITerm
+        )
+
+        return output
     }
 
-    setMode(isRunning) {
-        this.isRunning = isRunning
-    }
-
-    setTuning(kp, ki, kd) {
-        this.kp = kp
-        this.ki = ki * this.dt
-        this.kd = kd / this.dt
+    reset() {
+        this.ITerm = 0
+        this.inPrev = 0
     }
 }
